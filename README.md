@@ -41,14 +41,14 @@ code/
 │   ├── 01b_character_pov.py # 人物视角（出镜/主观镜头）
 │   ├── 01c_presentation.py  # 呈现视角（解说/旁白）
 │   └── 01d_playback.py      # 播放视角（竖屏/画中画…）
-├── 02_rhythm.py
-├── 03_structure.py
-├── 04_genre.py
-├── 05_drama.py
-├── 06_lang_style.py
-├── 07_plot_logic.py
-├── 08_authenticity.py
-└── 09_value_orient.py
+├── 02_rhythm.py             # 节奏
+├── 03_structure.py          # 结构形态
+├── 04_genre.py              # 体裁
+├── 05_drama.py              # 戏剧性
+├── 06_lang_style.py         # 语言风格
+├── 07_plot_logic.py         # 情节逻辑性
+├── 08_authenticity.py       # 感知真实性
+└── 09_value_orient.py       # 内容价值取向
 
 README.md
 
