@@ -28,31 +28,30 @@ pip install -r requirements.txt
 
 
 ## 项目结构
-│
-├─ data/
-│ ├─ videos/*.mp4
-│ └─ texts/total.csv # video_id,text
-│
-├─ output/ # 结果表 & 可视化
-├─ cache/ # 中间缓存
-│
-├─ code/
-│ ├─ perspective/ # ← 视角四维子模块
-│ │ ├─ 01a_text_pov.py # 人称视角（文本）
-│ │ ├─ 01b_character_pov.py # 人物视角（出镜/主观镜头）
-│ │ ├─ 01c_presentation.py # 呈现视角（解说/旁白）
-│ │ └─ 01d_playback.py # 播放视角（竖屏/画中画…）
-│ │
-│ ├─ 02_rhythm.py
-│ ├─ 03_structure.py
-│ ├─ 04_genre.py
-│ ├─ 05_drama.py
-│ ├─ 06_lang_style.py
-│ ├─ 07_plot_logic.py
-│ ├─ 08_authenticity.py
-│ └─ 09_value_orient.py
-│
-└─ README.md
+data/
+├── videos/*.mp4
+└── texts/total.csv          # video_id,text
+
+output/                      # 结果表 & 可视化
+cache/                       # 中间缓存
+
+code/
+├── perspective/             # 视角四维子模块
+│   ├── 01a_text_pov.py      # 人称视角（文本）
+│   ├── 01b_character_pov.py # 人物视角（出镜/主观镜头）
+│   ├── 01c_presentation.py  # 呈现视角（解说/旁白）
+│   └── 01d_playback.py      # 播放视角（竖屏/画中画…）
+├── 02_rhythm.py
+├── 03_structure.py
+├── 04_genre.py
+├── 05_drama.py
+├── 06_lang_style.py
+├── 07_plot_logic.py
+├── 08_authenticity.py
+└── 09_value_orient.py
+
+README.md
+
 
 
 ## 主要功能模块
