@@ -20,15 +20,12 @@
 | | **语言风格** Linguistic Style | 功能型 / 情感型 / 意象型 / 混合 |
 
 ---
-
 ## 环境与安装
 
-```bash
 conda create -n travel_narrative python=3.9
 conda activate travel_narrative
 pip install -r requirements.txt
 
----
 
 ## 项目结构
 │
@@ -68,7 +65,7 @@ pip install -r requirements.txt
 | **播放视角**<br/>(Playback POV)     | `orientation`∈{竖屏,横屏} <br/>`split_screen` bool <br/>`picture_in_picture` bool                    | 解析分辨率/黑边比例；检测多宫格、画中画帧布局                               |
 
 
-流程
+##### 流程
 
 读取文案 → Jieba 分词 → 统计人称 pronoun。
 
@@ -88,7 +85,7 @@ pip install -r requirements.txt
 | NRI            | `nri` | **Narrative Rhythm Index**<br/>(四指标归一化均值) | 0-1      |
 | `rhythm_class` | 0/1/2 | 慢/中/快                                     |          |
 
-算法
+##### 算法
 
 ffmpeg ➜ 8 kHz mono 音轨 ➜ librosa.beat_track() → BPM。
 
@@ -106,7 +103,8 @@ opencv 抽帧(fps = 2) ➜ 帧差 > 30 计一次剪辑 → CPS。
 | 单元式 Unit       | `0`  | 0.50–0.80   |
 | 连续式 Continuous | `1`  | > 0.80      |
 | 离散式 Discrete   | `2`  | < 0.50      |
-步骤
+
+##### 步骤
 
 PySceneDetect → 获取场景片段 min(MIN_SEG=3)。
 
