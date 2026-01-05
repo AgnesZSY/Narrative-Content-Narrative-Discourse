@@ -343,37 +343,21 @@ A dimension-reduction approach aligned with the paper’s modeling (e.g., MCA fo
 ## 7. Repository Structure (Suggested)
 
 ```text
-data/
-├── videos/*.mp4
-└── texts/total.csv                 # video_id, merged text pool
-
-output/
-├── indicators_video_level.csv      # final indicators + flags
-├── composite_indices.csv           # NC, ND, and standardized versions
-└── logs/                           # parameters, versions, processing logs
-
 code/
-├── preprocess/
-│   ├── asr_clean.py
-│   ├── ocr_clean.py
-│   ├── build_text_pool.py
-│   ├── frame_sample.py
-│   └── shot_detect.py
-├── nc/
-│   ├── plot_logicality.py
-│   ├── authenticity.py
-│   └── value_orientation.py
-├── nd/
-│   ├── perspective.py
-│   ├── structure_form.py
-│   ├── rhythm.py
-│   ├── genre.py
-│   ├── drama.py
-│   └── linguistic_style.py
-└── modeling/
-    ├── build_nc_index.py
-    ├── build_nd_index.py
-    └── standardize_and_interactions.py
+├── perspective/                    # Four-layer perspective submodules
+│   ├── 01a_text_pov.py             # Grammatical person POV (text-based)
+│   ├── 01b_character_pov.py        # Character/camera POV (on-screen presence & subjective shots)
+│   ├── 01c_presentation.py         # Presentation POV (narration / voiceover / dialogue)
+│   └── 01d_playback.py             # Playback POV (vertical / horizontal / picture-in-picture, etc.)
+├── 02_rhythm.py                    # Rhythm (audiovisual pacing)
+├── 03_structure.py                 # Structural form
+├── 04_genre.py                     # Genre
+├── 05_drama.py                     # Dramatic quality
+├── 06_lang_style.py                # Linguistic style
+├── 07_plot_logic.py                # Plot logicality
+├── 08_authenticity.py              # Perceived authenticity
+└── 09_value_orient.py              # Value orientation
+
 ```
 ---
 ## 8. Intended Use
@@ -389,5 +373,6 @@ machine learning feature screening (e.g., Lasso, XGBoost)
 configurational analysis (e.g., fsQCA) using transparent, auditable indicators
 
 It is not intended as a black-box classifier; it is a theory-aligned measurement system with explicit rules, flags, and validation.
+
 
 
