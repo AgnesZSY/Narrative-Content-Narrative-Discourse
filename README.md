@@ -1,173 +1,391 @@
-# 旅游短视频叙事内容 × 叙事话语  
-多模态量化工具集
+# Multimodal Measurement Toolkit for Narrative Content (NC) × Narrative Discourse (ND)
+## in Tourism Short Videos (Douyin)
 
-> **子任务**：Narrative Content & Narrative Discourse 变量的大样本自动量化
+This repository provides a reproducible, multimodal measurement toolkit for operationalizing **Narrative Content (NC)** and **Narrative Discourse (ND)** in large-scale tourism short video datasets.
+
+All indicators are constructed **only from video-intrinsic information**:
+- **Visual** (frames / scene segments / key-shot sequences)
+- **Text** (subtitles, speech transcripts, on-screen text via OCR)
+- **Audio** (signal-based rhythmic features)
+
 
 ---
 
-## 📚 理论框架与变量体系
+## 1. Conceptual Framework and Variable System
 
-| 范畴 | 变量 | 研究定义 |
-|------|------|----------|
-| **Narrative Content**<br/>(叙事内容) | **情节逻辑性** Plot Logicality | 事件 / 场景 / 动作的因果链与时间线是否清晰、完整、自然 |
-| | **感知真实性** Perceived Authenticity | 表现形式与细节给予用户的真实感、可信度 |
-| | **内容价值取向** Value Orientation | 导向功利（实用攻略）、情感（治愈/共鸣）、体验（沉浸/挑战）、或其他（景观展示/文化科普/个人成长…） |
-| **Narrative Discourse**<br/>(叙事话语) | **视角** Perspective | 文本人称、镜头拍摄、解说立场、播放形态等多层面 |
-| | **节奏** Rhythm | 音乐节拍、剪辑密度、运动密度、音画同步共同决定的整体节奏快慢 |
-| | **结构形态** Structural Form | 单元式（松散片段） / 连续式（一气呵成） / 离散式（强断裂感） |
-| | **体裁** Genre | Vlog / 攻略 / 合集 / 解说 / 戏剧化短剧等 |
-| | **戏剧性** Dramatic Quality | 悬念、反转、高潮、冲突等戏剧元素体现度 |
-| | **语言风格** Linguistic Style | 功能型 / 情感型 / 意象型 / 混合 |
+The toolkit implements two theoretically distinct but complementary narrative dimensions:
+
+### 1.1 Narrative Content (NC): *What is told*
+Narrative Content captures the substantive destination/travel information and meaning conveyed in the video.
+
+| Dimension | Variable | What it captures |
+|---|---|---|
+| Narrative Content | **Plot Logicality** | Coherence and traceability of travel events across **time–space–causality** |
+| Narrative Content | **Perceived Authenticity** | Strength of **credible and verifiable reality-anchoring cues** |
+| Narrative Content | **Value Orientation** | Relative emphasis on **utilitarian (informational)** vs **hedonic (emotional/aesthetic)** value |
+
+### 1.2 Narrative Discourse (ND): *How it is told*
+Narrative Discourse captures the expressive and organizational strategies shaping presentation fluency.
+
+| Dimension | Variable | What it captures |
+|---|---|---|
+| Narrative Discourse | **Perspective** | Narrative viewpoint across textual, visual, auditory, and playback layers |
+| Narrative Discourse | **Structural Form** | Global organization of narrative segments (unit/continuous/discrete) |
+| Narrative Discourse | **Rhythm** | Audiovisual pacing and temporal dynamics |
+| Narrative Discourse | **Genre** | Dominant narrative contract / communicative function |
+| Narrative Discourse | **Dramatic Quality** | Use of suspense, surprise, or tension structure |
+| Narrative Discourse | **Linguistic Style** | Dominant mode of language organization |
 
 ---
-## 环境与安装
 
-conda create -n travel_narrative python=3.9
-conda activate travel_narrative
-pip install -r requirements.txt
+## 2. Data Scope and Preprocessing
 
+### 2.1 Unit of Analysis
+Each observation corresponds to **one short video**.
 
-## 项目结构
+### 2.2 Multimodal Inputs
+
+#### Text Pool (merged)
+We build a unified **Text Pool** from:
+- speech transcripts (ASR)
+- subtitles
+- on-screen text (OCR)
+
+Cleaning includes sentence segmentation, denoising, punctuation normalization, and filler removal. OCR text is cleaned by removing links, emojis, repeated symbols, and meaningless characters.
+
+#### Visual Stream
+- sample frames at fixed intervals
+- detect shot boundaries to obtain key segments
+- apply visual quality checks (extreme darkness, severe blur, heavy occlusion)
+
+#### Audio Stream
+- extract time-series features from raw audio signals:
+  - energy
+  - beat fluctuation
+  - silence segments
+These are used primarily for **Rhythm** indicators.
+
+---
+
+## 3. Missing Modality Handling (Degradation + Flags)
+
+Short videos may lack certain modalities (e.g., no speech, no subtitles, no OCR text, or missing audio). The toolkit applies a **theory-consistent degradation strategy**:
+
+- If **text is missing**:
+  - constructs that can be supported by visuals (e.g., some spatial continuity / local cue signals) may still be computed using visual evidence
+  - constructs that are text-dependent (e.g., causal explanation; linguistic style; temporal ordering connectors) are **not imputed** and are set to missing
+- If **audio is missing**:
+  - audio-dependent rhythm components are skipped; rhythm can fall back to visual components where defined
+- All degraded measurements are **explicitly flagged** for downstream robustness checks.
+
+---
+
+## 4. Outlier Treatment and Standardization
+
+### 4.1 Outlier Treatment (Continuous Indicators)
+All continuous raw indicator scores are processed with **two-sided winsorization** (indicator-wise) **before** any mapping (e.g., to 0–1) and standardization:
+
+1) winsorize raw scores (two-sided)  
+2) apply indicator-specific transformations (including optional 0–1 mapping)  
+3) z-standardize for modeling (mean = 0, SD = 1)
+
+This provides a transparent mechanism for limiting extreme-value influence while keeping the pipeline auditable.
+
+### 4.2 Standardization and Interaction Construction
+For regression-ready outputs:
+- all continuous predictors are **z-standardized**
+- interaction terms are constructed **after standardization** to maintain interpretability and comparability
+
+---
+
+## 5. Variable Construction Details (1:1 Operational Definitions)
+
+## 5.1 Narrative Content (NC)
+
+### 5.1.1 Plot Logicality (continuous; optionally mapped to 0–1)
+**Concept**: internal orderliness and comprehensibility of travel events across **time–space–causality**.
+
+**Observed components (video-intrinsic evidence only):**
+- **Temporal logic** (Text Pool primary)
+  - density of time entities/time-window terms (e.g., morning, dusk, next day, Day X)
+  - density of sequencing connectors (e.g., first, then, next, finally)
+  - timeline consistency penalty for unexplained jumps
+- **Spatial logic** (Text Pool + visuals)
+  - density of place entities and locational cues (place names, landmarks, directional words)
+  - density of route/movement cues (from A to B, metro transfer, walking, uphill/downhill)
+  - scene continuity bonus from adjacent-segment semantic continuity
+- **Causal logic** (Text Pool primary)
+  - density of causal/explanatory connectors (because, therefore, so that, in order to)
+  - step → outcome chain cues (if you do X, you can get Y)
+  - problem → solution structures (avoid X otherwise…, tips/suggestions)
+
+**Aggregation rule**
+- compute `TimeScore`, `SpaceScore`, `CausalScore` (standardized)
+- `PlotLogicalityRaw = mean(TimeScore, SpaceScore, CausalScore)`
+- optional linear mapping to **0–1** for interpretability
+
+**Missing rules**
+- if text is missing: only the visual continuity part of spatial logic may be computed; other parts are missing and flagged
+- composite uses the mean of available subcomponents and preserves missing flags
+
+---
+
+### 5.1.2 Perceived Authenticity (continuous; optionally mapped to 0–1)
+**Concept**: the extent to which the destination situation is **credible and verifiable**, anchored in travel-realistic cues (content-level, not expressive polish).
+
+**Observed components**
+- **Verifiable information cues** (Text Pool)
+  - density of numeric/metric details (price, duration, distance, time windows)
+  - density of decision-relevant terms (transport, tickets, reservations, queues, routes, per-capita cost, opening hours)
+  - verifiable instruction-like structures (what to do, where to go, what is needed)
+- **Local/situational realism cues** (visual + Text Pool)
+  - location-identifying cues (signage, maps, ticket interfaces) aligned with textual place cues
+  - realistic situational cues (crowds, weather, transit, service procedures)
+  - process depiction cues (arrive → enter → experience → leave)
+- **Stylization risk cues (control component)** (visual)
+  - extreme filterization / unnatural dominant tones (risk signals)
+  - long purely-aesthetic sequences with minimal actionable detail (penalty cue)
+
+**Aggregation rule (main specification)**
+- compute and standardize: `VerifiableScore`, `LocalCueScore`, `StylizationRiskScore`
+- `AuthenticityRaw = (VerifiableScore + LocalCueScore − StylizationRiskScore) / 3`
+- optional linear mapping to **0–1**
+
+**Outputs**
+- Perceived Authenticity index
+- retain the three component scores for sensitivity analyses
+
+**Missing rules**
+- no text: `VerifiableScore` missing; compute from remaining components and flag
+- no valid visuals: compute text-based parts and flag
+
+---
+
+### 5.1.3 Value Orientation (continuous + optional grouping)
+**Concept**: relative emphasis on **utilitarian** vs **hedonic** content value.
+
+#### (a) Utilitarian Score (0–1)
+**Observed cues (Text Pool primary; visuals supplementary)**
+- actionable knowledge density (routes, transport, price, steps, cautions)
+- entity richness (place/time/price entities)
+- structured expression (lists, stepwise instructions, comparisons)
+- visual information carriers (maps, price screens, signage) as supplementary evidence
+
+**Output**
+- `UtilitarianScore` (optional 0–1 mapping)
+
+**Missing rules**
+- text missing: estimate only via visual information carriers and flag
+
+#### (b) Hedonic Score (0–1)
+**Observed cues (Text Pool primary; visuals supplementary)**
+- emotion/evaluation word density (e.g., healing, romantic, breathtaking)
+- imagery/aesthetic cue density (e.g., “like an oil painting,” “cyberpunk vibe”)
+- first-person experiential feelings
+- visual atmosphere/aesthetic dominance as supplementary evidence
+
+**Output**
+- `HedonicScore` (optional 0–1 mapping)
+
+**Missing rules**
+- text missing: estimate only via visual atmosphere cues and flag
+
+#### (c) Value Orientation
+**Main specification**
+- `ValueOrientation = HedonicScore − UtilitarianScore`
+  - higher values indicate a more hedonic orientation
+
+**Optional robustness grouping**
+- tertiles: utilitarian-dominant / balanced / hedonic-dominant
+
+**Missing rules**
+- if either score is missing, Orientation is missing and flagged
+
+---
+
+## 5.2 Narrative Discourse (ND)
+
+### 5.2.1 Perspective (categorical; multi-layer)
+Perspective is measured along four layers:
+
+1) **Grammatical person POV** (Text Pool)
+- first / second / third / impersonal dominance via pronouns and referential patterns
+- rule: dominant relative frequency; if all zero → impersonal
+
+2) **Presentation POV** (Text + audio + visuals)
+- self narration / third-party narration / dialogue / no speech
+- evidence fusion: speech presence, speaker count, in-scene speaker cues
+- output: label + (optional) confidence
+
+3) **Character/camera POV** (visual)
+- POV shot / direct-to-camera / objective follow / scene-dominant
+- cues: person presence ratio, gaze-to-camera, camera subjectivity (handheld/first-person vs fixed)
+
+4) **Playback orientation** (metadata)
+- vertical / horizontal / square based on aspect ratio thresholds
+- if metadata missing: infer from resolution and flag
+
+---
+
+### 5.2.2 Structural Form (categorical; optional coherence score)
+Classifies the global organization as:
+- **Unit-based**
+- **Continuous**
+- **Discrete**
+
+**Rule**
+- segment the video (shot boundary detection or fixed windows as fallback)
+- compute adjacent-segment semantic similarity (primarily visual embeddings; text as auxiliary)
+- map to three classes by thresholds
+- optionally retain a continuous coherence score for sensitivity
+
+**Missing rules**
+- segmentation failure: fallback to fixed-window segmentation and flag
+
+---
+
+### 5.2.3 Rhythm (continuous index)
+Rhythm captures audiovisual pacing through four standardized components:
+- **Editing density** (cuts per unit time)
+- **Motion intensity** (visual motion variability)
+- **Beat fluctuation** (audio beat/energy dynamics)
+- **Audio–visual synchronization** (alignment between audio events and visual transitions)
+
+**Aggregation**
+- standardize components
+- weighted fusion to form a **Rhythm index**
+- retain components for robustness analyses
+
+**Missing rules**
+- audio missing: compute rhythm from visual components only; flag audio-missing
+- visuals missing: rhythm missing
+
+---
+
+### 5.2.4 Genre (6 classes; label + confidence; text-first)
+**Goal**: identify the dominant narrative contract / communicative function.
+
+**Classes (6)**
+- fast-paced montage  
+- emotional expression  
+- food exploration (shop/food review)  
+- itinerary guide  
+- cultural explanation  
+- experiential narrative  
+
+**Evidence principle**
+- **text-first functional cues** as primary evidence
+- visuals/audio provide consistency adjustment (e.g., storefront/food close-ups; explanatory narration patterns; high beat for montage)
+
+**Outputs**
+- Top-1 genre label + confidence score
+- Top-2 retained for sensitivity analyses
+
+**Missing rules**
+- text missing: degrade to audiovisual evidence and flag low confidence
+
+---
+
+### 5.2.5 Dramatic Quality (4 classes; label + confidence)
+Classes:
+- no dramatic structure
+- suspense-driven sequence
+- surprise-driven sequence
+- combined suspense + surprise
+
+**Evidence**
+- text cues primary (suspense: delayed reveal; surprise: reversal markers)
+- audiovisual shifts (energy spikes, abrupt transitions, contrast blocks) as supporting evidence
+
+**Outputs**
+- label + confidence score
+
+---
+
+### 5.2.6 Linguistic Style (3 classes; optional continuous scores)
+Classes:
+- functional-descriptive
+- emotional-narrative
+- imagery-symbolic
+
+**Evidence (Text Pool primary)**
+- functional: high density of instructions, entities, checklists, “remember/should” cues
+- emotional: emotion-heavy first-person narration, rhetorical emphasis
+- imagery-symbolic: minimal, symbolic/imagistic language, strong “blank space” style
+
+**Outputs**
+- label (and optionally three continuous style scores)
+
+**Missing rules**
+- text missing: style missing (no visual imputation recommended)
+
+---
+
+## 6. Composite Indices Used for Modeling (NC and ND)
+
+### 6.1 Narrative Content Composite Index (NC)
+NC is computed from the Narrative Content indicators (Plot Logicality, Perceived Authenticity, Value Orientation) following the main-text specification:
+
+- primarily continuous scores
+- a composite index is formed using a dimension-reduction approach aligned with the paper’s modeling (e.g., PCA first component) and then standardized
+
+> Practical note: if Value Orientation is encoded as a binary direction in a specific model variant, keep only **one** dummy to avoid perfect multicollinearity.
+
+### 6.2 Narrative Discourse Composite Index (ND)
+ND is computed from discourse-side indicators:
+- primarily categorical strategy variables (Perspective, Structural Form, Genre, Dramatic Quality, Linguistic Style)
+- plus continuous Rhythm features
+
+A dimension-reduction approach aligned with the paper’s modeling (e.g., MCA for categorical sets + fusion with continuous rhythm) yields ND, which is then standardized.
+
+---
+
+## 7. Repository Structure (Suggested)
+
+```text
 data/
 ├── videos/*.mp4
-└── texts/total.csv          # video_id,text
+└── texts/total.csv                 # video_id, merged text pool
 
-output/                      # 结果表 & 可视化
-cache/                       # 中间缓存
+output/
+├── indicators_video_level.csv      # final indicators + flags
+├── composite_indices.csv           # NC, ND, and standardized versions
+└── logs/                           # parameters, versions, processing logs
 
 code/
-├── perspective/             # 视角四维子模块
-│   ├── 01a_text_pov.py      # 人称视角（文本）
-│   ├── 01b_character_pov.py # 人物视角（出镜/主观镜头）
-│   ├── 01c_presentation.py  # 呈现视角（解说/旁白）
-│   └── 01d_playback.py      # 播放视角（竖屏/画中画…）
-├── 02_rhythm.py             # 节奏
-├── 03_structure.py          # 结构形态
-├── 04_genre.py              # 体裁
-├── 05_drama.py              # 戏剧性
-├── 06_lang_style.py         # 语言风格
-├── 07_plot_logic.py         # 情节逻辑性
-├── 08_authenticity.py       # 感知真实性
-└── 09_value_orient.py       # 内容价值取向
+├── preprocess/
+│   ├── asr_clean.py
+│   ├── ocr_clean.py
+│   ├── build_text_pool.py
+│   ├── frame_sample.py
+│   └── shot_detect.py
+├── nc/
+│   ├── plot_logicality.py
+│   ├── authenticity.py
+│   └── value_orientation.py
+├── nd/
+│   ├── perspective.py
+│   ├── structure_form.py
+│   ├── rhythm.py
+│   ├── genre.py
+│   ├── drama.py
+│   └── linguistic_style.py
+└── modeling/
+    ├── build_nc_index.py
+    ├── build_nd_index.py
+    └── standardize_and_interactions.py
 
-README.md
+---
+Intended Use
 
+This toolkit is designed to support:
 
+regression analysis (main effects, interactions, nonlinear terms)
 
-## 主要功能模块
-### 4.1 视角 Perspective
-| 维度                              | 子类型 / 字段                                                                                         | 自动提取方法                                                |
-| ------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
-| **人称视角**<br/>(Text POV)         | `first_person_ratio` (我/我们) <br/>`second_person_ratio` (你/你们) <br/>`third_person_ratio` (他/她/他们) | 文案 Jieba 分词 → 代词统计；支持祈使句检测(`imperative_count`)        |
-| **人物视角**<br/>(Character POV)    | `subjective_cam_ratio` 主观镜头概率 <br/>`onscreen_host_ratio` 出现主讲人比例                                 | OpenCV + 头部运动/视线特征检测；MTCNN / face\_recognition 统计出镜帧数 |
-| **呈现视角**<br/>(Presentation POV) | `narration_type`∈{**演绎解说**/ **亲历独白**/ **多方对话**} <br/>`voice_over_ratio`                          | 音轨 VAD + STT 分析说话人数量；文本语气分类                           |
-| **播放视角**<br/>(Playback POV)     | `orientation`∈{竖屏,横屏} <br/>`split_screen` bool <br/>`picture_in_picture` bool                    | 解析分辨率/黑边比例；检测多宫格、画中画帧布局                               |
+robustness checks under missing-modality conditions
 
+machine learning feature screening (e.g., Lasso, XGBoost)
 
-##### 流程
+configurational analysis (e.g., fsQCA) using transparent, auditable indicators
 
-读取文案 → Jieba 分词 → 统计人称 pronoun。
-
-视频入帧 → 检测 FOV & 头部运动 → 主观镜头概率。
-
-音轨 → VAD(Voice Activity Detection) + STT(若可用) → 讲解 / 对话判别。
-
-汇总得分，生成 perspective.csv.
-
-### 4.2 节奏 Rhythm
-| 缩写             | 字段    | 说明                                        | 范围       |
-| -------------- | ----- | ----------------------------------------- | -------- |
-| BPM            | `bpm` | 音频节拍                                      | 0-200 Hz |
-| CPS            | `cps` | Cuts per Second，剪辑密度                      | 0-2      |
-| MDI            | `mdi` | Motion Density Index，运动密度                 | 0-100    |
-| SAS            | `sas` | Sound-Action Sync                         | 0-1      |
-| NRI            | `nri` | **Narrative Rhythm Index**<br/>(四指标归一化均值) | 0-1      |
-| `rhythm_class` | 0/1/2 | 慢/中/快                                     |          |
-
-##### 算法
-
-ffmpeg ➜ 8 kHz mono 音轨 ➜ librosa.beat_track() → BPM。
-
-opencv 抽帧(fps = 2) ➜ 帧差 > 30 计一次剪辑 → CPS。
-
-帧光流 + 灰度差距 → MDI。
-
-音频 onsets ↔ 场景切换时间差 < 0.1 s 记一次同步 → SAS。
-
-四者 min-max 归一化 → nri → 阈值 0.33/0.66 划三档。
-
-### 4.3 结构形态 Structural Form
-| 标签             | code | 判定阈值（平均相似度） |
-| -------------- | ---- | ----------- |
-| 单元式 Unit       | `0`  | 0.50–0.80   |
-| 连续式 Continuous | `1`  | > 0.80      |
-| 离散式 Discrete   | `2`  | < 0.50      |
-
-##### 步骤
-
-PySceneDetect → 获取场景片段 min(MIN_SEG=3)。
-
-每段中心帧 → ResNet-50 avg-pool 特征（2048 d）。
-
-相邻片段 cosine_similarity → mean_sim。
-
-对照阈值 → structure_label。
-
-结果持久化 & 缓存 (cache/*_features.npy).
-
-### 4.4 体裁 Genre
-| 体裁   | 关键词/特征                | 融合权重 (text/vision/audio/scene) |
-| ---- | --------------------- | ------------------------------ |
-| 行程攻略 | 行程、路线、攻略… + 地图/路牌     | 0.6/0.3/0.1/—                  |
-| 文化解说 | 历史、传说、博物馆… + 遗迹/展品    | 0.6/0.3/0.1/—                  |
-| 美食探店 | 美食、餐厅… + Food-Closeup | 0.2/0.6/0.2/—                  |
-| 体验叙事 | 体验、记录… + 第一视角         | 0.5/0.3/0.2/—                  |
-| 情感抒发 | 感悟、温暖… + 舒缓音乐         | 0.8/0.1/0.1/—                  |
-| 快闪剪辑 | 快闪、高能… + 高CPS/BPM     | 0.2/0.6/0.2/scene              |
-Pipeline：文本 analyze_text() ▶ 视觉 ResNet → 特征匹配 ▶ 音轨 tempo/声纹 ▶ 场景切换 → 加权决策 → genre_labels + confidence_scores.
-
-### 4.5 戏剧性 Dramatic Quality
-| 变量             | 字段                   | 来源   |
-| -------------- | -------------------- | ---- |
-| `has_suspense` | 悬念关键词 + 出现位置         | 文本   |
-| `has_surprise` | 意外关键词 + 情感跳跃         | 文本   |
-| `vis_score`    | 视觉变化 & 快切            | 视频   |
-| `audio_score`  | RMS/谱质心/对比度综合        | 音频   |
-| `drama_label`  | {0:无,1:悬念,2:意外,3:双重} | 综合决策 |
-阈值可借助 DramaThresholdOptimizer 自动优化 (Grid/Random Search).
-
-### 4.6 语言风格 Linguistic Style
-| style\_code | style\_name    | 判定逻辑                |
-| ----------- | -------------- | ------------------- |
-| `0`         | 功能型 Functional | 预算/交通/干货关键词≥阈值      |
-| `1`         | 情感型 Emotional  | 网络流行感叹词 + Emoji/感叹号 |
-| `2`         | 意象型 Imagery    | 句长<5 or 纯表情/风景诗意    |
-| `3`         | 混合型 Mixed      | 任两类比例差 < 0.1        |
-字段：ratio_functional, ratio_emotional, ratio_imagery, mixed_type.
-
-### 4.7 情节逻辑性 Plot Logicality
-| 字段                  | 描述                                   |
-| ------------------- | ------------------------------------ |
-| `event_count`       | 文本事件抽取数量                             |
-| `causal_links`      | 抽取因果对数                               |
-| `logic_score` (0-1) | `causal_links / event_count` \* 调整系数 |
-| `logic_level`       | {0:弱,1:中,2:强} 按 0.3/0.6 阈值           |
-实现：spacy + HanLP 事件抽取 ➜ temporal cue & 连词统计 ➜ 简易因果判别。
-若事件<3，则默认为弱逻辑。
-
-### 4.8 感知真实性 Perceived Authenticity
-| 信号                | 采样                           | 贡献权重 |
-| ----------------- | ---------------------------- | ---- |
-| 文本一手体验词 (`亲测/实录`) | Regex                        | 0.4  |
-| 画面原声率 (`原声轨/环境音`) | `audio.is_speech` vs `music` | 0.3  |
-| 手持抖动/噪点 (非大片质感)   | `Gyro blur metric`           | 0.3  |
-
-### 4.9 内容价值取向 Value Orientation
-| 取向              | 关键词簇        | 特征      |
-| --------------- | ----------- | ------- |
-| 功利 Utilitarian  | 省钱、攻略、必去、排队 | 文本+功能特征 |
-| 情感 Hedonic      | 治愈、感动、幸福、浪漫 | 文本情感倾向  |
-| 体验 Experiential | 体验、记录、挑战、打卡 | 文本+第一视角 |
-
-## 引用与致谢
-PySceneDetect、Librosa、TorchVision、Jieba 等开源项目
+It is not intended as a black-box classifier; it is a theory-aligned measurement system with explicit rules, flags, and validation.
