@@ -376,7 +376,7 @@ code/
     └── standardize_and_interactions.py
 ```
 ---
-Intended Use：
+## 8. Intended Use
 
 This toolkit is designed to support:
 
@@ -389,4 +389,5 @@ machine learning feature screening (e.g., Lasso, XGBoost)
 configurational analysis (e.g., fsQCA) using transparent, auditable indicators
 
 It is not intended as a black-box classifier; it is a theory-aligned measurement system with explicit rules, flags, and validation.
+
 
