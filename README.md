@@ -377,9 +377,16 @@ code/
 ```
 ---
 Intended Use：
+
 This toolkit is designed to support:
+
 regression analysis (main effects, interactions, nonlinear terms)
+
 robustness checks under missing-modality conditions
+
 machine learning feature screening (e.g., Lasso, XGBoost)
+
 configurational analysis (e.g., fsQCA) using transparent, auditable indicators
+
 It is not intended as a black-box classifier; it is a theory-aligned measurement system with explicit rules, flags, and validation.
+
